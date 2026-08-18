@@ -1,0 +1,90 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
+/* FINAL BRAND / PRODUCT TOUCH-UPS */
+.brand span{
+  width:40px;height:40px;border:0!important;border-radius:0!important;
+  background:url('/signal-logo.svg') center/contain no-repeat!important;
+  font-size:0!important;box-shadow:none!important;
+}
+.brand b{font-family:'Space Grotesk',Inter,Arial,sans-serif;letter-spacing:.13em}
+.brand small{font-family:'DM Mono',monospace}
+
+/* The analyzer is the dashboard: remove the extra marketing/CTA layer. */
+.hero{display:none!important}
+.analyzer{margin-top:34px!important}
+.analyzer::before{
+  content:'TURN CONTENT INTO A DECISION';
+  grid-column:1/-1;
+  display:block;
+  padding:34px 5vw 20px;
+  margin:0;
+  background:#090d0b;
+  border-bottom:1px solid #222b25;
+  color:#edf2ee;
+  font:600 clamp(28px,4vw,56px)/.95 'Space Grotesk',Inter,sans-serif;
+  letter-spacing:-.045em;
+}
+.analyzer::after{
+  content:'Test a post, reel, transcript or campaign. Run the model only when you are ready.';
+  grid-column:1/-1;
+  display:block;
+  margin-top:-18px;
+  padding:0 5vw 22px;
+  background:#090d0b;
+  color:#68756c;
+  font:10px/1.6 'DM Mono',monospace;
+}
+
+/* Cleaner Explore: keep the editorial content, remove the distracting moving art. */
+.exploreHero{grid-template-columns:1fr!important}
+.exploreHero .radar{display:none!important}
+.signalMap{gap:12px!important}
+.visualMoment{transform:none!important;box-shadow:none!important}
+.visualMoment:hover{transform:translateY(-3px)!important}
+.momentVisual{
+  min-height:150px!important;height:150px!important;
+  background:
+    linear-gradient(90deg,rgba(185,255,105,.08) 1px,transparent 1px),
+    linear-gradient(rgba(185,255,105,.06) 1px,transparent 1px),
+    linear-gradient(135deg,#0b120d,#071009)!important;
+  background-size:28px 28px,28px 28px,100% 100%!important;
+  border-bottom:1px solid #263129!important;
+  animation:none!important;
+}
+.momentVisual img{display:none!important}
+.momentVisual .scanLine{display:none!important}
+.momentVisual::after{
+  content:'SIGNAL / DISCOVERY';
+  position:absolute;left:18px;bottom:16px;
+  color:#59675e;font:8px 'DM Mono',monospace;letter-spacing:.12em;
+}
+.momentVisual span{font-family:'Space Grotesk',Inter,sans-serif!important;font-size:26px!important;font-weight:600!important;color:#b9ff69!important}
+.momentVisual small{font-family:'DM Mono',monospace!important;letter-spacing:.12em}
+.momentVisual b{font-family:'DM Mono',monospace!important;font-size:18px!important}
+.momentCopy h3{font-family:'Space Grotesk',Inter,sans-serif!important;letter-spacing:-.025em}
+.exploreFooter{margin-top:28px!important}
+
+/* Refined launch identity: elegant display typography + the real SIGNAL mark. */
+.launchLogoMark{
+  width:82px!important;height:82px!important;
+  margin:-150px 0 0 -41px!important;
+  border:0!important;background:transparent!important;box-shadow:none!important;
+}
+.launchLogoMark img{width:100%;height:100%;display:block;filter:drop-shadow(0 0 28px rgba(185,255,105,.16))}
+.launchWord{
+  font-family:'Space Grotesk',Inter,Arial,sans-serif!important;
+  font-weight:600!important;
+  letter-spacing:.16em!important;
+  text-transform:uppercase;
+  text-shadow:0 0 55px rgba(185,255,105,.1)!important;
+}
+.launchWord span:first-child{color:#b9ff69}
+.launchSub{font-family:'DM Mono',monospace!important;letter-spacing:.34em!important}
+
+@media(max-width:700px){
+  .analyzer{margin-top:18px!important}
+  .analyzer::before{padding:25px 5vw 16px;font-size:32px}
+  .analyzer::after{padding:0 5vw 18px}
+  .launchLogoMark{width:62px!important;height:62px!important;margin-top:-132px!important;margin-left:-31px!important}
+  .launchWord{letter-spacing:.08em!important}
+}
