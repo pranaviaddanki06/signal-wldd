@@ -1,0 +1,57 @@
+name: Final SIGNAL polish
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  polish:
+    if: !contains(github.event.head_commit.message, '[signal-polish]')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply launch, theme and real Explore imagery
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          page = Path('app/page.tsx')
+          s = page.read_text()
+          if "./LaunchOverlay" not in s:
+              s = s.replace("import './signal-final.css';", "import './signal-final.css';\nimport LaunchOverlay from './LaunchOverlay';\nimport ThemeToggle from './ThemeToggle';", 1)
+          if '<LaunchOverlay />' not in s:
+              s = s.replace('return <main>', 'return <><LaunchOverlay /><ThemeToggle /><main>', 1)
+              idx = s.rfind('</main>')
+              if idx != -1:
+                  s = s[:idx] + '</main></>' + s[idx+len('</main>'):]
+          if '<ThemeToggle />' not in s[s.find('<header'):s.find('</header>')]:
+              s = s.replace('<span className="online">● ONLINE</span>', '<ThemeToggle /><span className="online">● ONLINE</span>', 1)
+          page.write_text(s)
+          
+          css = Path('app/signal-final.css')
+          add = r'''
+
+/* SIGNAL launch experience */
+.launchOverlay{position:fixed;inset:0;z-index:9999;background:#050706;color:#edf2ee;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;animation:launchOut .7s ease 2.55s forwards}.launchGrid{position:absolute;inset:0;background-image:linear-gradient(rgba(185,255,105,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(185,255,105,.035) 1px,transparent 1px);background-size:52px 52px}.launchGlow{position:absolute;width:520px;height:520px;border-radius:50%;background:radial-gradient(circle,rgba(185,255,105,.16),transparent 65%);filter:blur(5px);animation:launchPulse 2s ease-in-out infinite}.launchLogoMark{position:relative;width:64px;height:64px;border:1px solid #b9ff69;display:grid;place-items:center;color:#b9ff69;font:800 30px Inter,Arial,sans-serif;box-shadow:0 0 35px rgba(185,255,105,.12);animation:launchRise .8s ease both}.launchWord{position:relative;display:flex;gap:3px;margin-top:24px;font:800 clamp(42px,7vw,76px)/.9 Inter,Arial,sans-serif;letter-spacing:.16em}.launchWord span{opacity:0;transform:translateY(24px);animation:letterIn .55s cubic-bezier(.2,.8,.2,1) forwards}.launchSub{position:relative;margin-top:13px;color:#68766d;font:9px monospace;letter-spacing:.22em}.launchLine{position:relative;display:flex;align-items:center;gap:9px;margin-top:44px;color:#637068;font:8px monospace;letter-spacing:.13em}.launchLine i{width:90px;height:1px;background:#314132;position:relative;overflow:hidden}.launchLine i:after{content:'';position:absolute;left:-40%;top:0;width:40%;height:100%;background:#b9ff69;animation:launchScan 1.1s linear infinite}.launchLine b{color:#b9ff69;font-size:9px}.themeToggle{position:fixed;right:5vw;top:18px;z-index:35;display:flex;align-items:center;gap:7px;border:1px solid #2c3a2e;background:rgba(7,12,9,.88);color:#b9ff69;padding:8px 10px;font:8px monospace;letter-spacing:.08em;backdrop-filter:blur(14px)}.themeToggle:hover{border-color:#b9ff69;box-shadow:0 0 18px rgba(185,255,105,.12)}.themeToggle svg{transition:transform .3s ease}.themeToggle.isLight svg{transform:rotate(25deg)}
+
+/* Real editorial photography for Explore */
+.momentArt{background-size:cover!important;background-position:center!important}.momentArt:after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(3,8,5,.05),rgba(3,8,5,.72));pointer-events:none}.moment:nth-child(1) .momentArt{background-image:url('https://unsplash.com/photos/man-filming-himself-live-on-smartphone-onyMKLN7aow/download?force=true&w=1600')!important}.moment:nth-child(2) .momentArt{background-image:url('https://unsplash.com/photos/team-brainstorming-with-sticky-notes-on-glass-wall-UtIr_UaiDmg/download?force=true&w=1600')!important}.moment:nth-child(3) .momentArt{background-image:url('https://unsplash.com/photos/diverse-team-collaborating-on-a-project-in-an-office-PSksbOVDhWk/download?force=true&w=1600')!important}.moment:nth-child(4) .momentArt{background-image:url('https://unsplash.com/photos/smartphone-on-tripod-shows-social-media-next-to-a-tablet-dpSS99j9QKw/download?force=true&w=1600')!important}.moment:nth-child(5) .momentArt{background-image:url('https://unsplash.com/photos/podcast-recording-setup-with-camera-microphone-and-tablet-L7KDJlvf_A0/download?force=true&w=1600')!important}.moment:nth-child(6) .momentArt{background-image:url('https://unsplash.com/photos/a-group-of-people-sitting-at-a-table-with-laptops-ylx85nvunvw/download?force=true&w=1600')!important}.momentArt span,.momentArt i,.momentArt b{z-index:2}.moment:hover .momentArt{transform:scale(1.025);transition:transform .45s ease}.momentArt{transition:transform .45s ease}
+
+/* Light mode */
+html.signal-light body{background:#eef3ed;color:#152018}html.signal-light main{background:radial-gradient(circle at 80% 0%,rgba(103,153,70,.14),transparent 25%),#eef3ed}html.signal-light .topbar{background:rgba(244,248,243,.9);border-color:#d4ded4}html.signal-light .brand{color:#142017}html.signal-light .topbar nav button{color:#68766c}html.signal-light .topbar nav button.active,html.signal-light .topbar nav button:hover{color:#2c6a22}html.signal-light .online{color:#4f8d39}html.signal-light .hero p,html.signal-light .lead{color:#607066}html.signal-light .hero h1 em,html.signal-light .page h1 em{color:#607066}html.signal-light .secondary{background:#f8fbf7;color:#182319;border-color:#b8c8b9}html.signal-light .heroArt{background:radial-gradient(circle,rgba(87,144,55,.18),transparent 28%),linear-gradient(145deg,#e6eee3,#f7faf6 60%,#dde8dc);border-color:#c8d5c8}html.signal-light .core{background:radial-gradient(circle,#e5f1df,#f7faf6 70%);color:#315d28}html.signal-light .float{background:rgba(250,252,249,.9);border-color:#c8d5c8;color:#66756a}html.signal-light .float b{color:#172118}html.signal-light .analyzer{background:#cbd7cc}html.signal-light .inputPane,html.signal-light .outputPane,html.signal-light .evidenceGrid article,html.signal-light .moment,html.signal-light .uploadCard,html.signal-light .publicCard,html.signal-light .metricPanel,html.signal-light .weights,html.signal-light .labPlaceholder{background:#f9fbf8;color:#172219;border-color:#d2ddd2}html.signal-light .sectionHead,html.signal-light .trace,html.signal-light .recommend{border-color:#d5dfd5}html.signal-light .inputPane textarea{background:#f1f6f0;color:#172219;border-color:#cbd7cc}html.signal-light .modeTabs button{background:#f1f6f0;color:#617066;border-color:#d1ddd1}html.signal-light .modeTabs button.selected,html.signal-light .modeTabs button:hover{background:#e7f0e4;color:#182219;border-color:#6e9a5f}html.signal-light .decision,html.signal-light .recCard{background:#f0f6ee;border-color:#cbd8ca}html.signal-light .emptyIcon{border-color:#cbd8cc;color:#5f7263}html.signal-light .empty p,html.signal-light .recIntro,html.signal-light .recBody p,html.signal-light .moment p{color:#66756b}html.signal-light .pipeline div,.signal-light .flow div,.signal-light .labFlow div{border-color:#d8e1d8;color:#6a786e}html.signal-light .bar,html.signal-light .traceRow i{background:#d5dfd5}html.signal-light .forecast,html.signal-light .forecast>div{border-color:#d5dfd5}html.signal-light .moment strong{border-color:#d5dfd5}html.signal-light .themeToggle{background:rgba(250,252,249,.92);color:#3d762f;border-color:#aebfac}html.signal-light .launchOverlay{background:#f4f8f2;color:#182319}html.signal-light .launchGrid{background-image:linear-gradient(rgba(65,112,49,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(65,112,49,.05) 1px,transparent 1px)}
+@keyframes letterIn{to{opacity:1;transform:translateY(0)}}@keyframes launchRise{from{opacity:0;transform:translateY(20px) scale(.9)}to{opacity:1;transform:none}}@keyframes launchPulse{50%{transform:scale(1.08);opacity:.75}}@keyframes launchScan{to{left:110%}}@keyframes launchOut{to{opacity:0;visibility:hidden;pointer-events:none}}
+'''
+          current = css.read_text()
+          if 'SIGNAL launch experience' not in current:
+              css.write_text(current + add)
+          PY
+      - name: Commit polished UI
+        run: |
+          git config user.name "signal-bot"
+          git config user.email "signal-bot@users.noreply.github.com"
+          git add app/page.tsx app/signal-final.css app/LaunchOverlay.tsx app/ThemeToggle.tsx
+          git diff --cached --quiet || git commit -m "Final SIGNAL launch, theme and Explore polish [signal-polish]"
+          git push
