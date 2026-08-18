@@ -1,10 +1,11 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import './visual.css';
+import './interactive.css';
 
 export const metadata: Metadata = {
   title: 'SIGNAL — Content Opportunity Intelligence',
-  description: 'An applied ML prototype for ranking high-value moments from long-form media.',
+  description: 'An applied ML prototype for ranking high-value content opportunities.',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
