@@ -7,7 +7,7 @@
 .strategyGrid .rank1 .strategyImage{background-image:url("https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1400&q=85")}
 .strategyGrid .rank2 .strategyImage{background-image:url("https://images.unsplash.com/photo-1492724441997-5dc865305da7?auto=format&fit=crop&w=1400&q=85")}
 .strategyGrid .rank3 .strategyImage{background-image:url("https://images.unsplash.com/photo-1590602847861-f357a9332bbc?auto=format&fit=crop&w=1400&q=85")}
-.strategyGrid .rank4 .strategyImage{background-image:url("https://www.hubspot.com/hs-fs/hubfs/AI-Generated%20Media/Images/Marketing%20Team%20in%20Dynamic%20Advertising%20Studio.png?name=Marketing+Team+in+Dynamic+Advertising+Studio.png&width=1400")}
+.strategyGrid .rank4 .strategyImage{background-image:url("https://images.unsplash.com/photo-1521737711867-e3b97375f902?auto=format&fit=crop&w=1400&q=85")}
 .strategyGrid .strategyImage .strategyGlow{position:absolute;inset:auto -10% -30% -10%;height:70%;z-index:3;background:radial-gradient(circle at 50% 50%,rgba(185,255,105,.32),transparent 62%);filter:blur(18px);pointer-events:none}
 .strategyGrid .strategyImage svg{position:absolute;z-index:4;right:22px;top:20px;color:#fff;filter:drop-shadow(0 2px 10px rgba(0,0,0,.8))}
 .strategyGrid .strategyImage>span{position:absolute;z-index:4;left:18px;top:18px;color:#fff;font:700 9px monospace;text-shadow:0 2px 10px #000}
