@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import './visual.css';
 
 export const metadata: Metadata = {
   title: 'SIGNAL — Content Opportunity Intelligence',
