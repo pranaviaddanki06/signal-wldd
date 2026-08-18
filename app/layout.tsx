@@ -3,6 +3,7 @@ import './globals.css';
 import './visual.css';
 import './interactive.css';
 import './immersive.css';
+import './real-images.css';
 
 export const metadata: Metadata = {
   title: 'SIGNAL — Content Opportunity Intelligence',
