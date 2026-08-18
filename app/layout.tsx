@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import './visual.css';
 import './interactive.css';
+import './immersive.css';
 
 export const metadata: Metadata = {
   title: 'SIGNAL — Content Opportunity Intelligence',
