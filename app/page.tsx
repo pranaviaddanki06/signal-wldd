@@ -1,6 +1,6 @@
 'use client';
 import { useMemo, useState } from 'react';
-import { Activity, ArrowRight, Check, ChevronRight, Database, FileText, Gauge, Megaphone, Mic2, Play, Sparkles, Upload, Video, X } from 'lucide-react';
+import { Activity, ArrowRight, Check, ChevronRight, Database, FileText, Gauge, Megaphone, Mic2, Play, Sparkles, Upload, Video, X, Wand2, TrendingUp, Lightbulb } from 'lucide-react';
 import { extractFeatures, featureVector, trainLogistic, predict, rankMoments } from '@/lib/signal';
 import { BENCHMARK } from '@/lib/benchmark';
 
@@ -16,7 +16,7 @@ const MODE_INFO: Record<Mode, { label: string; icon: typeof FileText; placeholde
 };
 
 const DEMOS: Record<Mode, string> = {
-  post: 'People share a product story when it gives them a useful sentence, identity or joke they can make their own.',
+  post: 'Coffee feels better than working overtime. Maybe the best productivity hack is knowing when to stop.',
   reel: 'A short-form reel showing a creator trying a ridiculous office productivity hack, with a surprising payoff in the first three seconds. The tone is funny, relatable and designed for people to tag coworkers.',
   transcript: 'The strongest creator work often starts with a constraint, not a script. Give people the outcome and let them find the language. That is where the idea starts to feel native instead of manufactured.',
   campaign: 'Launch a new everyday sneaker to young urban professionals. We want creator-led social content that feels native to internet culture, earns shares and gives people a reason to talk about the product without sounding like an advertisement.',
@@ -43,10 +43,10 @@ function stats(rows: Row[], text: string, mode: Mode) {
   const reach = avg(['reach', 'Reach']) || 42000;
   const likes = avg(['likes', 'Likes']) || 1850;
   const words = text.trim().split(/\s+/).filter(Boolean).length;
-  const hook = /[?!]|why|secret|actually|surprising|nobody|first three/i.test(text) ? .93 : Math.min(.82, .45 + words / 100);
+  const hook = /[?!]|why|secret|actually|surprising|nobody|first three|better than/i.test(text) ? .93 : Math.min(.82, .45 + words / 100);
   const clarity = Math.min(.97, Math.max(.5, 1 - Math.max(0, (words - (mode === 'transcript' ? 160 : 90)) / 220)));
   const novelty = Math.min(.95, .5 + new Set(text.toLowerCase().split(/\s+/)).size / Math.max(words, 1) * .45);
-  const fit = mode === 'campaign' ? .91 : mode === 'reel' ? .88 : .84;
+  const fit = mode === 'campaign' ? .91 : mode === 'reel' ? .88 : mode === 'transcript' ? .86 : .84;
   const score = Math.round((hook * .29 + clarity * .18 + novelty * .18 + fit * .18 + .82 * .17) * 100);
   const conf = Math.min(.96, .61 + score / 100 * .15 + Math.min(rows.length / 100000, .18));
   const mult = .55 + score / 100 * 1.15;
@@ -61,6 +61,37 @@ function validation() {
   return te.filter(x => (predict(m, x.features) >= .5 ? 1 : 0) === x.label).length / te.length;
 }
 
+function recommendations(mode: Mode, text: string, s: ReturnType<typeof stats>) {
+  const lower = text.toLowerCase();
+  const common = [
+    { title: 'Sharpen the first line', detail: 'Lead with the tension or surprising statement before the explanation.', impact: 7, icon: 'HOOK' },
+    { title: 'Make the payoff concrete', detail: 'Give the audience a specific image, outcome, joke or sentence they can repeat.', impact: 5, icon: 'CLARITY' },
+  ];
+  if (mode === 'post') {
+    const coffee = lower.includes('coffee') || lower.includes('overtime');
+    return [
+      coffee ? { title: 'Keep the original thought — make it more relatable', detail: 'Try: “Coffee feels better than another late night at work. Maybe productivity is knowing when to stop.” This preserves your idea while adding a stronger human tension.', impact: 14, icon: 'REWRITE' } : common[0],
+      { title: 'Add a visual contrast', detail: 'Pair the line with a simple split visual: late-night desk vs. coffee break. Contrast makes the idea easier to understand without adding more copy.', impact: 9, icon: 'VISUAL' },
+      { title: 'Add a conversation trigger', detail: 'End with a low-friction question such as “What is your actual productivity hack?” to invite comments and replies.', impact: 8, icon: 'ENGAGE' },
+    ];
+  }
+  if (mode === 'reel') return [
+    { title: 'Front-load the payoff', detail: 'Put the surprising outcome or reaction in the first 1–2 seconds, then reveal how it happened.', impact: 13, icon: 'RETENTION' },
+    { title: 'Use an explicit visual beat', detail: 'Add a clear prop, movement or on-screen text change every few seconds so the idea survives without sound.', impact: 10, icon: 'VISUAL' },
+    { title: 'Create a taggable moment', detail: 'Build one line or reaction that makes viewers immediately think of a coworker or friend.', impact: 9, icon: 'SHARE' },
+  ];
+  if (mode === 'transcript') return [
+    { title: 'Clip the strongest sentence first', detail: 'Open the clip with the most standalone statement, then use the preceding context only if it improves understanding.', impact: 12, icon: 'CLIP' },
+    { title: 'Turn one idea into a series', detail: 'Split the transcript into 3–5 related moments rather than forcing one long clip.', impact: 10, icon: 'SERIES' },
+    { title: 'Add a captioned takeaway', detail: 'Give every clip one repeatable takeaway in the on-screen text so it works even when muted.', impact: 8, icon: 'CAPTION' },
+  ];
+  return [
+    { title: 'Give creators a constraint, not a script', detail: 'Specify the outcome and brand guardrails while leaving room for native creator language.', impact: 12, icon: 'CREATOR' },
+    { title: 'Define the culture hook', detail: 'Anchor the campaign to one audience truth, behavior or conversation rather than a generic “viral” objective.', impact: 10, icon: 'CULTURE' },
+    { title: 'Design the distribution loop', detail: 'Plan how one creator asset becomes remixes, memes, replies and follow-on posts.', impact: 9, icon: 'DISTRIBUTE' },
+  ];
+}
+
 export default function Home() {
   const [page, setPage] = useState<Page>('analyze');
   const [mode, setMode] = useState<Mode>('post');
@@ -72,8 +103,11 @@ export default function Home() {
   const [ran, setRan] = useState(false);
   const [labels, setLabels] = useState<Record<number, number>>({});
   const [selected, setSelected] = useState(0);
+  const [labRunning, setLabRunning] = useState(false);
+  const [labStage, setLabStage] = useState(0);
   const ranked = useMemo(() => rankMoments(text, MOMENTS.map(({ id, time, title, text }) => ({ id, time, title, text })), null), [text]);
   const s = useMemo(() => stats(rows, text, mode), [rows, text, mode]);
+  const recs = useMemo(() => recommendations(mode, text, s), [mode, text, s]);
   const acc = useMemo(validation, []);
   const info = MODE_INFO[mode];
 
@@ -85,6 +119,12 @@ export default function Home() {
     window.setTimeout(() => setPhase(2), 420);
     window.setTimeout(() => setPhase(3), 850);
     window.setTimeout(() => { setPhase(4); setRunning(false); setRan(true); }, 1450);
+  };
+  const runLab = () => {
+    setLabRunning(true); setLabStage(1);
+    window.setTimeout(() => setLabStage(2), 500);
+    window.setTimeout(() => setLabStage(3), 1000);
+    window.setTimeout(() => { setLabStage(4); setLabRunning(false); }, 1550);
   };
   const upload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0]; if (!f) return;
@@ -103,16 +143,16 @@ export default function Home() {
       <section className="proofStrip"><div><strong>29,999</strong><span>DATA ROWS READY</span></div><div><strong>5</strong><span>CORE SIGNALS</span></div><div><strong>{Math.round(acc * 100)}%</strong><span>HELD-OUT BENCHMARK*</span></div><div><strong>4</strong><span>ANALYSIS MODES</span></div><div><strong>HITL</strong><span>EDITORIAL FEEDBACK</span></div></section>
 
       <section className="analyzer" id="analyzer"><div className="panel inputPanel"><div className="panelHead"><span>01 / GIVE SIGNAL SOMETHING TO ANALYZE</span><b>INPUT → MODEL → OUTPUT</b></div><div className="modeGrid">{(Object.keys(MODE_INFO) as Mode[]).map(m => { const I = MODE_INFO[m].icon; return <button key={m} className={mode === m ? 'active' : ''} onClick={() => changeMode(m)}><I size={17} /><span>{MODE_INFO[m].label}</span><small>{m === 'post' ? 'Idea / caption' : m === 'reel' ? 'Video concept' : m === 'transcript' ? 'Podcast / talk' : 'Brand brief'}</small></button>; })}</div><div className="inputMeta"><span>{info.title}</span><small>{info.hint}</small></div><textarea value={text} onChange={e => setText(e.target.value)} placeholder={info.placeholder} /><button className="runButton" onClick={runSignal} disabled={running}><span>{running ? 'SIGNAL IS RUNNING' : 'RUN SIGNAL'}</span>{running ? <Activity size={17} className="spin" /> : <Play size={16} fill="currentColor" />}</button><div className="pipelineMini"><span className={phase >= 1 ? 'lit' : ''}>INGEST</span><ArrowRight size={12} /><span className={phase >= 2 ? 'lit' : ''}>FEATURES</span><ArrowRight size={12} /><span className={phase >= 3 ? 'lit' : ''}>RANK</span><ArrowRight size={12} /><span className={phase >= 4 ? 'lit' : ''}>DECISION</span></div></div>
-        <div className="panel outputPanel"><div className="panelHead"><span>02 / SIGNAL OUTPUT</span><b className="green">{running ? 'PROCESSING' : ran ? 'ANALYSIS COMPLETE' : 'READY'}</b></div>{running ? <RunningState phase={phase} mode={mode} /> : <Output mode={mode} s={s} acc={acc} ran={ran} ranked={ranked} onInspect={(i) => { setSelected(i); go('explore'); }} />}</div></section>
+        <div className="panel outputPanel"><div className="panelHead"><span>02 / SIGNAL OUTPUT</span><b className="green">{running ? 'PROCESSING' : ran ? 'ANALYSIS COMPLETE' : 'READY'}</b></div>{running ? <RunningState phase={phase} mode={mode} /> : <Output mode={mode} s={s} acc={acc} ran={ran} ranked={ranked} recs={recs} onInspect={(i) => { setSelected(i); go('explore'); }} />}</div></section>
 
       <section className="explain"><div><label>THE IDEA</label><h2>Don't ask AI to make the decision.<br /><em>Ask it to make the shortlist.</em></h2></div><p>SIGNAL is designed as decision support: measurable signals surface the opportunities, explainability shows the reasoning, and human judgment stays in control.</p><div className="flow"><span>RAW CONTENT</span><ArrowRight /><span>SIGNAL EXTRACTION</span><ArrowRight /><span>RANKING</span><ArrowRight /><span>HUMAN DECISION</span></div></section>
     </>}
 
-    {page === 'explore' && <section className="page"><div className="pageHead"><div><label>CONTENT DISCOVERY</label><h1>Explore the<br /><em>signal field.</em></h1></div><p>Not a blank gallery. Each card is a live candidate. Click one and its content is loaded into ANALYZE for a full decision trace.</p></div><div className="wall">{ranked.map((m, i) => { const source = MOMENTS.find(x => x.id === m.id)!; return <button className={`moment ${selected === i ? 'selected' : ''}`} key={m.id} onClick={() => { setText(m.text); setMode(i % 3 === 0 ? 'post' : i % 3 === 1 ? 'reel' : 'transcript'); setSelected(i); setRan(true); go('analyze'); }}><div className="momentImg"><img src={source.img} alt="Content signal visual" /><div className="rankBadge">0{i + 1}</div><strong>{Math.round(m.score)}</strong><span>OPPORTUNITY</span></div><div className="momentBody"><small>{m.time} / {source.tag}</small><h2>{m.title}</h2><p>{m.text}</p><div><b>WHY IT RANKS</b><span>{m.rankReason.replace('Led by ', '')}</span></div><strong className="inspect">INSPECT SIGNAL <ArrowRight size={13} /></strong></div></button>; })}</div></section>}
+    {page === 'explore' && <section className="page"><div className="pageHead"><div><label>CONTENT DISCOVERY</label><h1>Explore the<br /><em>signal field.</em></h1></div><p>Each card is a live candidate. Click one and its content is loaded into ANALYZE for a full decision trace.</p></div><div className="wall">{ranked.map((m, i) => { const source = MOMENTS.find(x => x.id === m.id)!; return <button className={`moment ${selected === i ? 'selected' : ''}`} key={m.id} onClick={() => { setText(m.text); setMode(i % 3 === 0 ? 'post' : i % 3 === 1 ? 'reel' : 'transcript'); setSelected(i); setRan(true); go('analyze'); }}><div className="momentImg"><img src={source.img} alt="Content signal visual" /><div className="rankBadge">0{i + 1}</div><strong>{Math.round(m.score)}</strong><span>OPPORTUNITY</span></div><div className="momentBody"><small>{m.time} / {source.tag}</small><h2>{m.title}</h2><p>{m.text}</p><div><b>WHY IT RANKS</b><span>{m.rankReason.replace('Led by ', '')}</span></div><strong className="inspect">INSPECT SIGNAL <ArrowRight size={13} /></strong></div></button>; })}</div></section>}
 
     {page === 'data' && <DataLab rows={rows} file={file} upload={upload} clear={() => { setRows([]); setFile(''); }} />}
 
-    {page === 'lab' && <section className="page"><div className="pageHead"><div><label>APPLIED ML / MODEL LAB</label><h1>Don't hide<br /><em>the model.</em></h1></div><p>Open the black box: benchmark performance, leakage controls, candidate review and the path from prototype to WLD-specific intelligence.</p></div><div className="labMetrics"><Metric label="HELD-OUT BENCHMARK*" value={`${Math.round(acc * 100)}%`} note="curated 30-row benchmark" /><Metric label="BENCHMARK TYPE" value="TIME-SPLIT" note="demo evaluation" /><Metric label="LEAKAGE POLICY" value="SAFE" note="outcome fields excluded" /><Metric label="HUMAN FEEDBACK" value={`${Object.keys(labels).length}`} note="labels in this session" /></div><div className="reviewBox"><div className="reviewHead"><div><label>HUMAN-IN-THE-LOOP</label><h2>Would an editor choose this?</h2></div><span>YES / NO becomes future training signal</span></div>{BENCHMARK.slice(0, 10).map(r => <div className="review" key={r.id}><span>{r.text}</span><button className={labels[r.id] === 1 ? 'chosen yes' : ''} onClick={() => setLabels({ ...labels, [r.id]: 1 })}><Check size={14} /> YES</button><button className={labels[r.id] === 0 ? 'chosen no' : ''} onClick={() => setLabels({ ...labels, [r.id]: 0 })}><X size={14} /> NO</button></div>)}</div><div className="method"><label>WHY THIS MATTERS</label><h2>Good applied ML is more than a pretty score.</h2><p>The prototype separates pre-publication features from post-publication outcomes, exposes its benchmark and keeps editorial judgment visible. A production WLD system would add proprietary historical campaigns, time-based validation, calibration and continuous feedback.</p></div></section>}
+    {page === 'lab' && <section className="page"><div className="pageHead"><div><label>APPLIED ML / MODEL LAB</label><h1>See the model<br /><em>think.</em></h1></div><p>This is the interactive technical room: run a mini evaluation, inspect the decision pipeline, then challenge candidate decisions with human feedback.</p></div><div className="labMetrics"><Metric label="HELD-OUT BENCHMARK*" value={`${Math.round(acc * 100)}%`} note="curated demo benchmark" /><Metric label="BENCHMARK TYPE" value="TIME-SPLIT" note="prototype evaluation" /><Metric label="LEAKAGE POLICY" value="SAFE" note="outcome fields excluded" /><Metric label="HUMAN FEEDBACK" value={`${Object.keys(labels).length}`} note="labels in this session" /></div><div className="labConsole"><div className="consoleVisual"><div className="labOrbit lo1" /><div className="labOrbit lo2" /><div className="labCore"><Database size={25} /><b>{labRunning ? 'RUNNING' : labStage === 4 ? 'EVALUATED' : 'MODEL LAB'}</b><small>LOGISTIC RANKER</small></div>{['DATA','FEATURES','MODEL','SCORE'].map((x,i) => <span key={x} className={`labNode ln${i+1} ${labStage > i ? 'lit' : ''}`}>{x}</span>)}</div><div className="consoleSide"><label>LIVE EVALUATION</label><h2>Run the model lab</h2><p>Watch a candidate pass through the same conceptual stages used by SIGNAL: data → features → model → decision. This makes the applied-ML layer visible instead of hiding it behind a score.</p><button className="cta" onClick={runLab} disabled={labRunning}>{labRunning ? 'EVALUATING…' : labStage === 4 ? 'RUN AGAIN' : 'RUN MODEL LAB'} <Play size={14} /></button><div className="labStages">{['LOAD BENCHMARK','EXTRACT FEATURES','FIT MODEL','EVALUATE HOLDOUT'].map((x,i)=><div className={labStage > i ? 'done' : ''} key={x}><span>0{i+1}</span><b>{x}</b><i /></div>)}</div></div></div><div className="reviewBox"><div className="reviewHead"><div><label>HUMAN-IN-THE-LOOP</label><h2>Would an editor choose this?</h2></div><span>YES / NO becomes future training signal</span></div>{BENCHMARK.slice(0, 10).map(r => <div className="review" key={r.id}><span>{r.text}</span><button className={labels[r.id] === 1 ? 'chosen yes' : ''} onClick={() => setLabels({ ...labels, [r.id]: 1 })}><Check size={14} /> YES</button><button className={labels[r.id] === 0 ? 'chosen no' : ''} onClick={() => setLabels({ ...labels, [r.id]: 0 })}><X size={14} /> NO</button></div>)}</div><div className="method"><label>WHY THIS MATTERS</label><h2>Good applied ML is more than a pretty score.</h2><p>The prototype separates pre-publication features from post-publication outcomes, exposes its benchmark and keeps editorial judgment visible. A production WLD system would add proprietary historical campaigns, time-based validation, calibration and continuous feedback.</p></div></section>}
 
     {page === 'why' && <section className="page"><div className="pageHead"><div><label>WHY SIGNAL / WHY WLD</label><h1>Less noise.<br /><em>More attention.</em></h1></div><p>WLD operates where brands, creators, memes and culture meet. SIGNAL is a decision-support layer for the moment when there are too many possible ideas and not enough time to evaluate them.</p></div><div className="steps">{[['01', 'INPUT', 'Campaign brief, post, reel, transcript, creator idea or dataset.'], ['02', 'INTELLIGENCE', 'Convert content into measurable signals and rank opportunities.'], ['03', 'HUMAN', 'Let editors challenge, accept or reject recommendations.'], ['04', 'IMPROVE', 'Use judgments and future outcomes to improve the system.']].map(x => <article key={x[0]}><span>{x[0]}</span><Sparkles size={20} /><h2>{x[1]}</h2><p>{x[2]}</p></article>)}</div><div className="vision"><div><label>THE WLD OPPORTUNITY</label><h2>Imagine every campaign arriving with its own shortlist of signals.</h2><p>Connect proprietary campaign history, creator performance and cultural data to turn this prototype into a WLD-specific intelligence layer.</p></div><div className="visionGraphic"><span>NOISE</span><ArrowRight /><b>SIGNAL</b><ArrowRight /><span>DECISION</span></div></div></section>}
 
@@ -125,10 +165,22 @@ function RunningState({ phase, mode }: { phase: number; mode: Mode }) {
   return <div className="running"><div className="runningCore"><div className="runningRing r1" /><div className="runningRing r2" /><Activity size={34} /><b>{phase < 4 ? 'ANALYZING' : 'DONE'}</b><small>{MODE_INFO[mode].label}</small></div><div className="signalRoute">{steps.map((x, i) => <div className={phase > i ? 'done' : phase === i ? 'current' : ''} key={x}><span>{String(i + 1).padStart(2, '0')}</span><b>{x}</b><i /></div>)}</div><p>Signal blocks are moving through the decision pipeline. This is the actual interaction state, not a static loading screen.</p></div>;
 }
 
-function Output({ mode, s, acc, ran, ranked, onInspect }: { mode: Mode; s: ReturnType<typeof stats>; acc: number; ran: boolean; ranked: ReturnType<typeof rankMoments>; onInspect: (i: number) => void }) {
+function Output({ mode, s, acc, ran, ranked, recs, onInspect }: { mode: Mode; s: ReturnType<typeof stats>; acc: number; ran: boolean; ranked: ReturnType<typeof rankMoments>; recs: ReturnType<typeof recommendations>; onInspect: (i: number) => void }) {
   const primary = mode === 'transcript' ? `3 clip candidates` : mode === 'campaign' ? `${s.score}/100 campaign fit` : mode === 'reel' ? `${s.score}/100 reel potential` : `${s.score}/100 opportunity`;
-  const secondary = mode === 'transcript' ? 'Top moment detected from the supplied text' : mode === 'campaign' ? 'Audience + creator + distribution alignment' : mode === 'reel' ? 'Scroll-stop + retention + shareability' : 'Hook + clarity + novelty + creator fit';
-  return <div className="output"><div className="decisionTop"><div><small>OPPORTUNITY</small><b>{ran ? s.score : '—'}</b><span>/100</span></div><div><small>MODEL CONFIDENCE</small><strong>{ran ? Math.round(s.conf * 100) : '—'}%</strong><div className="confidence"><i style={{ width: `${ran ? s.conf * 100 : 0}%` }} /></div></div></div><div className="decisionCard"><div><small>{MODE_INFO[mode].title.toUpperCase()}</small><h2>{ran ? primary : 'Run SIGNAL to generate a decision'}</h2><p>{secondary}</p></div><Gauge size={32} /></div>{ran && <><div className="forecast"><div><small>EST. VIEWS / REACH</small><b>{fmt(s.lo)} — {fmt(s.hi)}</b><span>directional range</span></div><div><small>EST. LIKES</small><b>{fmt(s.llo)} — {fmt(s.lhi)}</b><span>directional range</span></div><div><small>BENCHMARK ACCURACY*</small><b>{Math.round(acc * 100)}%</b><span>curated demo benchmark</span></div></div><div className="signalTrace"><div className="traceHead"><span>SIGNAL TRACE</span><b>WHY THIS SCORE?</b></div>{[['HOOK', s.hook], ['CLARITY', s.clarity], ['NOVELTY', s.novelty], ['CREATOR FIT', s.fit], ['CAMPAIGN MATCH', .82]].map(([name, value], i) => <div className="traceRow" key={String(name)}><span>{name}</span><i><em style={{ width: `${Number(value) * 100}%` }} /></i><b>{Math.round(Number(value) * 100)}</b>{i < 4 && <ArrowRight size={12} />}</div>)}</div>{mode === 'transcript' && <div className="clipCandidates"><div><small>CLIP CANDIDATES</small><b>3</b></div>{ranked.slice(0, 3).map((m, i) => <button key={m.id} onClick={() => onInspect(i)}><span>0{i + 1}</span><p>{m.title}</p><strong>{Math.round(m.score)}</strong></button>)}</div>}</>}</div>;
+  const secondary = mode === 'transcript' ? 'Top moments detected from the supplied text' : mode === 'campaign' ? 'Audience + creator + distribution alignment' : mode === 'reel' ? 'Scroll-stop + retention + shareability' : 'Hook + clarity + novelty + creator fit';
+  const uplift = Math.max(...recs.map(r => r.impact));
+  return <div className="output"><div className="decisionTop"><div><small>OPPORTUNITY</small><b>{ran ? s.score : '—'}</b><span>/100</span></div><div><small>MODEL CONFIDENCE</small><strong>{ran ? Math.round(s.conf * 100) : '—'}%</strong><div className="confidence"><i style={{ width: `${ran ? s.conf * 100 : 0}%` }} /></div></div></div><div className="decisionCard"><div><small>{MODE_INFO[mode].title.toUpperCase()}</small><h2>{ran ? primary : 'Run SIGNAL to generate a decision'}</h2><p>{secondary}</p></div><Gauge size={32} /></div>{ran && <><div className="forecast"><div><small>EST. VIEWS / REACH</small><b>{fmt(s.lo)} — {fmt(s.hi)}</b><span>directional range</span></div><div><small>EST. LIKES</small><b>{fmt(s.llo)} — {fmt(s.lhi)}</b><span>directional range</span></div><div><small>BENCHMARK ACCURACY*</small><b>{Math.round(acc * 100)}%</b><span>curated demo benchmark</span></div></div><div className="signalTrace"><div className="traceHead"><span>SIGNAL TRACE</span><b>WHY THIS SCORE?</b></div>{[['HOOK', s.hook], ['CLARITY', s.clarity], ['NOVELTY', s.novelty], ['CREATOR FIT', s.fit], ['CAMPAIGN MATCH', .82]].map(([name, value], i) => <div className="traceRow" key={String(name)}><span>{name}</span><i><em style={{ width: `${Number(value) * 100}%` }} /></i><b>{Math.round(Number(value) * 100)}</b>{i < 4 && <ArrowRight size={12} />}</div>)}</div>
+
+<div className="recommendationPanel"><div className="recommendationHead"><div><small>03 / RECOMMENDATION ENGINE</small><h3><Wand2 size={18} /> Improve the idea before you publish</h3><p>SIGNAL keeps the original idea intact, then suggests practical changes and estimates the directional upside.</p></div><strong>+{uplift}%</strong></div><div className="recommendationOriginal"><span>ORIGINAL</span><b>{textPreview(mode, s)}</b></div>{recs.map((r, i) => <div className="recommendation" key={r.title}><div className="recIndex">0{i + 1}</div><div className="recIcon"><Lightbulb size={15} /></div><div className="recCopy"><small>{r.icon}</small><h4>{r.title}</h4><p>{r.detail}</p></div><div className="recImpact"><span>DIRECTIONAL UPSIDE</span><b>+{r.impact}%</b></div></div>)}<div className="recommendationFooter"><TrendingUp size={15} /><span>If you apply the strongest recommendation, the modeled opportunity could move from <b>{s.score}</b> toward <b>{Math.min(99, s.score + uplift)}</b>. This is a directional scenario, not a guaranteed outcome.</span></div></div>
+
+{mode === 'transcript' && <div className="clipCandidates"><div><small>CLIP CANDIDATES</small><b>3</b></div>{ranked.slice(0, 3).map((m, i) => <button key={m.id} onClick={() => onInspect(i)}><span>0{i + 1}</span><p>{m.title}</p><strong>{Math.round(m.score)}</strong></button>)}</div>}</>}</div>;
+}
+
+function textPreview(mode: Mode, s: ReturnType<typeof stats>) {
+  if (mode === 'post') return 'Keep the core idea. Strengthen the hook, visual contrast and conversation trigger.';
+  if (mode === 'reel') return 'Keep the concept. Move the payoff earlier and build a taggable visual beat.';
+  if (mode === 'transcript') return 'Keep the insight. Clip the strongest standalone sentence and add a clear takeaway.';
+  return 'Keep the campaign objective. Tighten the cultural hook, creator constraint and distribution loop.';
 }
 
 function Metric({ label, value, note }: { label: string; value: string; note: string }) { return <div className="metric"><small>{label}</small><b>{value}</b><span>{note}</span></div>; }
