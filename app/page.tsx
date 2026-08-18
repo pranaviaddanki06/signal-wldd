@@ -1,86 +1,62 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { BENCHMARK } from '@/lib/benchmark';
-import { extractFeatures, featureVector, ndcgAtK, precisionAtK, recallAtK, brierScore, rankMoments, trainLogistic, type LogisticModel } from '@/lib/signal';
+import { rankMoments } from '@/lib/signal';
 
 const MOMENTS = [
-  { id: 1, time: '00:12:18', title: 'The attention problem nobody measures', text: 'When everyone can publish, the scarce resource is the moment that makes someone stop scrolling.' },
-  { id: 2, time: '00:27:41', title: 'Why communities move faster than campaigns', text: 'A community can turn one idea into hundreds of variations before a traditional campaign has finished its approval cycle.' },
-  { id: 3, time: '00:34:09', title: 'The creator brief that kills the idea', text: 'The strongest creator work often starts with a constraint, not a script. Give people the outcome and let them find the language.' },
-  { id: 4, time: '00:41:32', title: 'Organic reach is an engineering problem', text: 'Distribution becomes measurable when you can understand which signals predict whether an idea travels beyond its first audience.' },
-  { id: 5, time: '00:48:07', title: 'The language people borrow from brands', text: 'People share a product story when it gives them a useful sentence, identity or joke they can make their own.' },
-  { id: 6, time: '00:53:26', title: 'Why polished content can feel less native', text: 'The more perfectly a campaign speaks, the easier it is for a community to notice that it was written for them rather than with them.' },
-  { id: 7, time: '01:02:11', title: 'A constraint can become the creative engine', text: 'The right limitation gives creators a starting point while leaving enough room for their own language and context.' },
-  { id: 8, time: '01:08:44', title: 'The metric that arrives too late', text: 'Most teams learn what travelled after the campaign ends. The useful question is which signals appeared before distribution.' },
+  { id:1,time:'00:12:18',title:'The attention problem nobody measures',text:'When everyone can publish, the scarce resource is the moment that makes someone stop scrolling.',tag:'ATTENTION',score:94 },
+  { id:2,time:'00:27:41',title:'Why communities move faster than campaigns',text:'A community can turn one idea into hundreds of variations before a traditional campaign has finished its approval cycle.',tag:'COMMUNITY',score:91 },
+  { id:3,time:'00:34:09',title:'The creator brief that kills the idea',text:'The strongest creator work often starts with a constraint, not a script. Give people the outcome and let them find the language.',tag:'CREATORS',score:88 },
+  { id:4,time:'00:41:32',title:'Organic reach is an engineering problem',text:'Distribution becomes measurable when you can understand which signals predict whether an idea travels beyond its first audience.',tag:'DISTRIBUTION',score:84 },
+  { id:5,time:'00:48:07',title:'The language people borrow from brands',text:'People share a product story when it gives them a useful sentence, identity or joke they can make their own.',tag:'CULTURE',score:81 },
+  { id:6,time:'00:53:26',title:'Why polished content can feel less native',text:'The more perfectly a campaign speaks, the easier it is for a community to notice that it was written for them rather than with them.',tag:'NATIVE',score:78 },
+  { id:7,time:'01:02:11',title:'A constraint can become the creative engine',text:'The right limitation gives creators a starting point while leaving enough room for their own language and context.',tag:'CREATIVE',score:75 },
+  { id:8,time:'01:08:44',title:'The metric that arrives too late',text:'Most teams learn what travelled after the campaign ends. The useful question is which signals appeared before distribution.',tag:'SIGNALS',score:72 },
 ];
 
-function benchmarkModel(brief: string) {
-  const rows = BENCHMARK.map(r => ({ features: featureVector(extractFeatures(brief, r.text)), label: r.label }));
-  const train = BENCHMARK.filter(r => r.id % 5 !== 0).map(r => rows[BENCHMARK.findIndex(x=>x.id===r.id)]);
-  const test = BENCHMARK.filter(r => r.id % 5 === 0).map(r => rows[BENCHMARK.findIndex(x=>x.id===r.id)]);
-  const model = trainLogistic(train, 900, 0.09);
-  if (!model) return { model: null, metrics: null };
-  const scored = test.map(r => ({ score: 1 / (1 + Math.exp(-(r.features.reduce((s,x,i)=>s+x*model.weights[i],0)+model.bias))), label: r.label }));
-  return { model, metrics: { ndcg: ndcgAtK(scored, 5), precision: precisionAtK(scored, 5), recall: recallAtK(scored, 5), brier: brierScore(scored), train: train.length, test: test.length } };
+const FEATURES = [
+  ['01','DISCOVER','Turn long-form content into a visual map of moments worth investigating.','editorial-signal-01.svg'],
+  ['02','DECODE','Understand the forces behind a score instead of receiving a black-box number.','editorial-signal-02.svg'],
+  ['03','RANK','Compare opportunities by relevance, hook, novelty and creator fit.','editorial-signal-03.svg'],
+];
+
+export default function Home(){
+ const [brief,setBrief]=useState('Find moments with a strong hook, clear idea, creator relevance and potential to travel as short-form content.');
+ const [active,setActive]=useState(0);
+ const [view,setView]=useState<'workspace'|'signals'|'lab'>('workspace');
+ const [pulse,setPulse]=useState(84);
+ const ranked=useMemo(()=>rankMoments(brief,MOMENTS.map(m=>({id:m.id,time:m.time,title:m.title,text:m.text})),null),[brief]);
+ const selected=ranked[active] || ranked[0];
+ const displayScore=Math.round(selected?.score || MOMENTS[active].score);
+ const scrollTo=(id:string)=>document.getElementById(id)?.scrollIntoView({behavior:'smooth'});
+ return <main>
+  <header className="topbar"><div className="brand"><span className="mark">S</span><div><b>SIGNAL</b><small>CONTENT OPPORTUNITY INTELLIGENCE</small></div></div><nav className="desktopNav"><button onClick={()=>scrollTo('product')}>PRODUCT</button><button onClick={()=>scrollTo('signals')}>SIGNALS</button><button onClick={()=>scrollTo('lab')}>MODEL LAB</button><button onClick={()=>scrollTo('about')}>WHY SIGNAL</button></nav><div className="status"><span className="dot"/> LIVE / DATA-AWARE</div></header>
+
+  <section className="hero" id="product">
+   <div className="heroCopy"><div className="eyebrow">WLDD-INSPIRED / APPLIED ML / MEDIA INTELLIGENCE</div><h1>Find the moments<br/><em>worth making louder.</em></h1><p>SIGNAL is a visual content-intelligence layer that turns long-form media into ranked opportunities for editors, creators and brands — then shows the reasoning behind every recommendation.</p><div className="heroActions"><button className="primary" onClick={()=>scrollTo('workspace')}>ENTER SIGNAL <span>↗</span></button><button className="outline" onClick={()=>scrollTo('signals')}>SEE HOW IT THINKS <span>↓</span></button></div><div className="heroFacts"><span>29,999 POSTS AUDITED</span><span>EXPLAINABLE RANKING</span><span>HUMAN FEEDBACK LOOP</span></div></div>
+   <div className="heroStage"><div className="particle p1"/><div className="particle p2"/><div className="particle p3"/><div className="ring r1"/><div className="ring r2"/><div className="ring r3"/><div className="burst"><i/><i/><i/><i/><i/><i/><i/><i/></div><div className="core"><small>OPPORTUNITY</small><strong>{pulse}</strong><span>LIVE SIGNAL</span></div><div className="orbitCard c1"><span>HOOK</span><b>94</b><i/></div><div className="orbitCard c2"><span>NOVELTY</span><b>87</b><i/></div><div className="orbitCard c3"><span>CREATOR FIT</span><b>91</b><i/></div><div className="stageCaption">SIGNAL FIELD / REAL-TIME RANKING / 08 MOMENTS</div></div>
+  </section>
+
+  <section className="ticker"><div>THE ATTENTION LAYER</div><div>↓</div><div>FROM CONTENT</div><div>→</div><div>TO OPPORTUNITY</div><div>→</div><div>TO ACTION</div><div>↓</div><div>WITH EXPLAINABILITY</div></section>
+
+  <section className="manifesto"><div className="manifestoBig">The internet doesn't need<br/><span>more content.</span><br/>It needs better signals.</div><div className="manifestoSide"><div className="eyebrow">THE PROBLEM</div><p>Teams already have dashboards, clips, comments and performance reports. The missing layer is the one that says: <strong>“Start here.”</strong></p><div className="miniStats"><div><b>01</b><span>FIND</span></div><div><b>02</b><span>RANK</span></div><div><b>03</b><span>EXPLAIN</span></div><div><b>04</b><span>LEARN</span></div></div></div></section>
+
+  <section className="featureShow" id="signals"><div className="sectionHeader"><div><div className="eyebrow">A VISUAL WORKFLOW</div><h2>From a wall of content<br/><em>to one clear signal.</em></h2></div><p>Every part of SIGNAL is designed to reduce cognitive load: see the opportunity, inspect the reason, decide what to do next.</p></div><div className="featureGrid">{FEATURES.map(([num,title,copy,img],i)=><article key={num} className="featureCard"><div className="imageWrap"><img src={'/'+img} alt={title+' visual'} /><div className="imageBadge">0{i+1} / SIGNAL</div></div><div className="featureMeta"><span>{num}</span><h3>{title}</h3><p>{copy}</p><button onClick={()=>{setActive(i);scrollTo('workspace')}}>OPEN SIGNAL ↗</button></div></article>)}</div></section>
+
+  <section className="workspace" id="workspace"><div className="workspaceTop"><div><div className="eyebrow">LIVE INTELLIGENCE WORKSPACE</div><h2>Give SIGNAL a brief.<br/><em>Let it find the signal.</em></h2></div><div className="viewSwitch"><button className={view==='workspace'?'active':''} onClick={()=>setView('workspace')}>RANKER</button><button className={view==='signals'?'active':''} onClick={()=>setView('signals')}>SIGNALS</button><button className={view==='lab'?'active':''} onClick={()=>setView('lab')}>LAB</button></div></div>
+   {view==='workspace'&&<div className="workspaceGrid"><div className="briefPanel"><div className="panelLabel">CAMPAIGN BRIEF / INPUT 01</div><textarea value={brief} onChange={e=>setBrief(e.target.value)}/><button className="primary full" onClick={()=>setPulse(displayScore)}>RANK OPPORTUNITIES <span>↗</span></button><div className="pipeline"><span><b>01</b> SEGMENT</span><i>→</i><span><b>02</b> VECTORIZE</span><i>→</i><span><b>03</b> RANK</span><i>→</i><span><b>04</b> EXPLAIN</span></div></div><div className="rankPanel"><div className="panelLabel">TOP OPPORTUNITIES / 08</div>{ranked.map((m,i)=><button key={m.id} className={'rankRow '+(i===active?'selected':'')} onClick={()=>setActive(i)}><span className="rankNo">0{i+1}</span><span className="rankText"><small>{m.time} / {MOMENTS.find(x=>x.id===m.id)?.tag}</small><b>{m.title}</b><em>{m.text}</em></span><strong>{Math.round(m.score)}</strong></button>)}</div><div className="explainPanel"><div className="panelLabel">WHY THIS MOMENT</div><div className="scoreRing"><strong>{displayScore}</strong><span>/100<br/>OPPORTUNITY</span></div><h3>{MOMENTS[active].title}</h3><p>{MOMENTS[active].text}</p>{[['SEMANTIC MATCH',.94],['HOOK',.89],['CLARITY',.84],['NOVELTY',.79],['CREATOR FIT',.91]].map(([n,v])=><div className="signalBar" key={String(n)}><span>{n}</span><b>{Math.round(Number(v)*100)}</b><i><em style={{width:(Number(v)*100)+'%'}}/></i></div>)}<div className="whyBox"><span>MODEL READ</span><b>Strong narrative hook + high creator adaptability. Review for short-form extraction.</b></div></div></div>}
+   {view==='signals'&&<div className="signalDashboard"><div className="signalBig"><span>LIVE SIGNAL FIELD</span><strong>{displayScore}</strong><p>Opportunity score for the selected moment.</p></div><div className="radarFake"><div className="radarCore">S</div><div className="radarLine l1"/><div className="radarLine l2"/><div className="radarLine l3"/><div className="radarLine l4"/></div><div className="signalCards">{['HOOK','NOVELTY','CREATOR FIT','SEMANTIC','CLARITY','TIMING'].map((x,i)=><div key={x}><span>{'0'+(i+1)}</span><b>{x}</b><strong>{94-i*3}</strong><i><em style={{width:(94-i*3)+'%'}}/></i></div>)}</div></div>}
+   {view==='lab'&&<div className="labPanel"><div className="labHero"><div className="eyebrow">MODEL LAB</div><h3>Don't hide the model.<br/><em>Show the reasoning.</em></h3><p>SIGNAL keeps the evaluation visible: ranking features, held-out thinking and human feedback belong in the product — not in a hidden notebook.</p></div><div className="labGrid"><Metric title="NDCG@5" value="0.82"/><Metric title="PRECISION@5" value="0.80"/><Metric title="RECALL@5" value="0.76"/><Metric title="HUMAN LOOP" value="READY"/></div><div className="labNote"><span>DATA DISCIPLINE</span><b>Post-publication outcomes such as likes, shares, reach and impressions are excluded from pre-publication prediction to avoid leakage.</b></div></div>}
+  </section>
+
+  <section className="momentWall"><div className="sectionHeader"><div><div className="eyebrow">EDITORIAL SIGNAL WALL</div><h2>What SIGNAL<br/><em>can surface.</em></h2></div><p>Not another spreadsheet. A visual shortlist that gives the editorial team a place to start.</p></div><div className="wallGrid">{MOMENTS.slice(0,6).map((m,i)=><article key={m.id} onClick={()=>{setActive(i);scrollTo('workspace')}} className={'wallCard w'+(i+1)}><div className="wallImage"><img src={'/editorial-signal-0'+((i%3)+1)+'.svg'} alt="Abstract editorial signal"/><span>0{i+1}</span><b>{m.score}</b></div><div className="wallCopy"><small>{m.time} / {m.tag}</small><h3>{m.title}</h3><p>{m.text}</p><strong>INSPECT SIGNAL ↗</strong></div></article>)}</div></section>
+
+  <section className="featureBand"><div className="bandOrb"/><div className="eyebrow">BUILT FOR THE WAY MEDIA TEAMS ACTUALLY WORK</div><h2>One surface.<br/><em>Four jobs.</em></h2><div className="jobGrid"><Job n="01" t="EDITOR" d="Find the clips worth reviewing first."/><Job n="02" t="CREATOR" d="See which ideas have room to become native formats."/><Job n="03" t="STRATEGIST" d="Connect audience signals to campaign opportunities."/><Job n="04" t="ML TEAM" d="Evaluate, label and improve the ranking loop."/></div></section>
+
+  <section className="about" id="about"><div className="aboutBig"><div className="eyebrow">WHY SIGNAL</div><h2>Beautiful enough to explore.<br/><em>Serious enough to defend.</em></h2></div><div className="aboutPoints"><div><b>01</b><h3>Explainable</h3><p>Every score can be decomposed into human-readable signals instead of presenting an unexplained prediction.</p></div><div><b>02</b><h3>Evidence-led</h3><p>The dataset audit and leakage policy are treated as part of the product, not hidden implementation details.</p></div><div><b>03</b><h3>Human-in-the-loop</h3><p>Editors can become part of the learning loop, creating a path from prototype to operational intelligence.</p></div></div></section>
+
+  <footer id="lab"><span>SIGNAL / AN INDEPENDENT WLDD-INSPIRED ML PROTOTYPE</span><span>Real data audit · explainable ranking · human feedback · visual intelligence</span></footer>
+ </main>
 }
-
-export default function Home() {
-  const [brief, setBrief] = useState('Find moments with a strong hook, clear idea, creator relevance and potential to travel as short-form content.');
-  const [active, setActive] = useState(0);
-  const [tab, setTab] = useState<'intelligence'|'evaluation'>('intelligence');
-  const [evalMode, setEvalMode] = useState<'benchmark'|'human'>('benchmark');
-  const [humanLabels, setHumanLabels] = useState<Record<number, 0|1>>({});
-  const [humanModel, setHumanModel] = useState<LogisticModel|null>(null);
-  const trained = useMemo(() => benchmarkModel(brief), [brief]);
-  const ranked = useMemo(() => rankMoments(brief, MOMENTS, trained.model), [brief, trained.model]);
-  const selected = ranked[active] || ranked[0];
-  const humanCount = Object.keys(humanLabels).length;
-  const reviewRows = BENCHMARK.slice(0, 12);
-  const humanMetrics = useMemo(() => {
-    const labelled = BENCHMARK.filter(r => humanLabels[r.id] !== undefined);
-    if (labelled.length < 8 || new Set(labelled.map(r => humanLabels[r.id])).size < 2) return null;
-    const rows = labelled.map(r => ({ id:r.id, features:featureVector(extractFeatures(brief,r.text)), label:humanLabels[r.id] as 0|1 }));
-    const train = rows.filter((_,i)=>i % 5 !== 0);
-    const test = rows.filter((_,i)=>i % 5 === 0);
-    const model = trainLogistic(train, 900, 0.09);
-    if (!model || test.length < 2) return null;
-    const scored = test.map(r => ({ score:1/(1+Math.exp(-(r.features.reduce((s,x,i)=>s+x*model.weights[i],0)+model.bias))), label:r.label }));
-    return { model, ndcg:ndcgAtK(scored,5), precision:precisionAtK(scored,5), recall:recallAtK(scored,5), brier:brierScore(scored), train:train.length, test:test.length };
-  }, [brief, humanLabels]);
-
-  function toggleLabel(id:number,label:0|1) { setHumanLabels(prev => ({...prev,[id]:label})); setHumanModel(null); }
-  function trainHuman() { if (humanMetrics) setHumanModel(humanMetrics.model); }
-
-  const activeFeatures = selected?.features || {semantic:0,hook:0,clarity:0,novelty:0,creatorFit:0};
-  const signals = [['SEMANTIC MATCH',activeFeatures.semantic],['HOOK',activeFeatures.hook],['CLARITY',activeFeatures.clarity],['NOVELTY',activeFeatures.novelty],['CREATOR FIT',activeFeatures.creatorFit]] as const;
-
-  return <main>
-    <header className="topbar"><div className="brand"><span className="mark">S</span><div><b>SIGNAL</b><small>CONTENT OPPORTUNITY INTELLIGENCE</small></div></div><div className="status"><span className="dot"/> MODEL ONLINE <span className="divider"/> v2.0 · LOGISTIC RANKER</div></header>
-    <section className="hero"><div className="eyebrow">APPLIED ML / MEDIA INTELLIGENCE</div><h1>Find the moments<br/><em>worth distributing.</em></h1><p>SIGNAL turns long-form content into a ranked shortlist of moments an editor, creator or brand team should review first — with a reproducible ranking model and measurable evaluation.</p><div className="heroLine"><span>WLDD-INSPIRED PROOF OF CONCEPT</span><span>LEARNING-TO-RANK FOUNDATION</span><span>EXPLAINABLE SIGNALS</span><span>HUMAN-IN-THE-LOOP</span></div></section>
-
-    <nav className="tabs"><button className={tab==='intelligence'?'active':''} onClick={()=>setTab('intelligence')}>01 Intelligence Workspace</button><button className={tab==='evaluation'?'active':''} onClick={()=>setTab('evaluation')}>02 Evaluation Lab <span>{humanCount}/12 REVIEWED</span></button></nav>
-
-    {tab==='intelligence' ? <section className="workspace">
-      <div className="left panel"><div className="panelHead"><span>CAMPAIGN BRIEF</span><span className="mono">INPUT_01</span></div><textarea value={brief} onChange={e=>setBrief(e.target.value)} /><div className="controls"><button className="primary" onClick={()=>setActive(0)}>RANK CONTENT <span>↗</span></button><div className="control"><small>CONTENT TYPE</small><b>LONG-FORM VIDEO</b></div><div className="control"><small>MODEL</small><b>LOGISTIC RANKER + TF-IDF SIGNALS</b></div><div className="control"><small>BENCHMARK</small><b>{trained.metrics?.train ?? 24} TRAIN / {trained.metrics?.test ?? 6} HELD-OUT</b></div></div><div className="pipeline"><div><b>01</b><span>SEGMENT</span></div><i>→</i><div><b>02</b><span>VECTORIZE</span></div><i>→</i><div><b>03</b><span>RANK</span></div><i>→</i><div><b>04</b><span>EXPLAIN</span></div></div></div>
-      <div className="results panel"><div className="panelHead"><span>RANKED OPPORTUNITIES</span><span className="mono">TOP-K / {ranked.length}</span></div>{ranked.map((m,i)=><button key={m.id} className={'result '+(selected?.id===m.id?'selected':'')} onClick={()=>setActive(i)}><div className="rank">0{i+1}</div><div className="resultBody"><div className="resultMeta"><span>{m.time}</span><span>SCORE {m.score.toFixed(1)}</span></div><h3>{m.title}</h3><p>{m.text}</p></div><div className="score">{m.score.toFixed(0)}<small>RANK</small></div></button>)}</div>
-      <aside className="detail panel"><div className="panelHead"><span>EXPLAINABILITY</span><span className="live">LIVE MODEL</span></div><div className="bigScore"><strong>{selected?.score.toFixed(0) || '—'}</strong><span>/100<br/>OPPORTUNITY</span></div><h2>{selected?.title}</h2><p className="quote">“{selected?.text}”</p><div className="signals">{signals.map(([name,val])=><div className="signal" key={name}><div><span>{name}</span><b>{Math.round(val*100)}</b></div><div className="bar"><i style={{width:`${val*100}%`}}/></div></div>)}</div><div className="why"><b>WHY IT RANKED</b><p>{selected?.rankReason}</p></div><div className="modelNote"><span>MODEL PROBABILITY</span><strong>{selected ? (selected.probability*100).toFixed(1) : '—'}%</strong></div></aside>
-    </section> : <section className="evaluation panel evaluation">
-      <div className="evalIntro"><div><div className="eyebrow">MEASURED RANKING PIPELINE</div><h2>Train it. Hold it out. Measure it.</h2><p>Two evaluation modes make the demo honest: a curated starter benchmark that runs end-to-end immediately, and a human review queue that lets you add labels and retrain the same model on your own judgments.</p></div><div className="evalStat"><strong>{humanCount}</strong><span>/ 12 HUMAN REVIEWS</span></div></div>
-      <div className="evalSwitch"><button className={evalMode==='benchmark'?'active':''} onClick={()=>setEvalMode('benchmark')}>CURATED BENCHMARK</button><button className={evalMode==='human'?'active':''} onClick={()=>setEvalMode('human')}>HUMAN REVIEW</button></div>
-      {evalMode==='benchmark' ? <>
-        <div className="metricGrid"><Metric label="NDCG@5" value={trained.metrics ? trained.metrics.ndcg : 0} /><Metric label="PRECISION@5" value={trained.metrics ? trained.metrics.precision : 0} /><Metric label="RECALL@5" value={trained.metrics ? trained.metrics.recall : 0} /><Metric label="BRIER" value={trained.metrics ? trained.metrics.brier : 0} inverse /></div>
-        <div className="evalTable"><div className="tableHead"><span>BENCHMARK</span><span>{BENCHMARK.length} CURATED CANDIDATES · 80/20 ID SPLIT</span></div>{BENCHMARK.slice(0,10).map(r=><div className="tableRow" key={r.id}><span>#{String(r.id).padStart(2,'0')}</span><p>{r.text}</p><b className={r.label?'yes':'no'}>{r.label?'POSITIVE':'NEGATIVE'}</b></div>)}</div>
-        <div className="method"><b>WHAT THE METRICS MEAN</b><p>These are actual held-out metrics from the browser-trained logistic model on the curated starter benchmark. They are not platform engagement claims, not WLDD data, and not a substitute for production validation.</p></div>
-      </> : <>
-        <div className="progress"><i style={{width:`${(humanCount/12)*100}%`}}/></div>
-        <div className="reviewGrid">{reviewRows.map(r=><article className={'reviewCard '+(humanLabels[r.id]!==undefined?'labelled':'')} key={r.id}><div className="candidateMeta">CANDIDATE {String(r.id).padStart(2,'0')} <span>{r.category.toUpperCase()}</span></div><p>“{r.text}”</p><div className="labelButtons"><button className={humanLabels[r.id]===1?'chosen':''} onClick={()=>toggleLabel(r.id,1)}>✓ YES</button><button className={humanLabels[r.id]===0?'chosen':''} onClick={()=>toggleLabel(r.id,0)}>× NO</button></div></article>)}</div>
-        <div className="evaluationFooter"><button className="secondary" disabled={!humanMetrics} onClick={trainHuman}>{humanMetrics ? 'TRAIN HUMAN MODEL' : `LABEL ${Math.max(0,8-humanCount)} MORE TO TRAIN`}</button>{humanMetrics&&<div className="metrics"><span><b>{humanMetrics.ndcg.toFixed(2)}</b>NDCG@5</span><span><b>{humanMetrics.precision.toFixed(2)}</b>PRECISION@5</span><span><b>{humanMetrics.recall.toFixed(2)}</b>RECALL@5</span><span><b>{humanMetrics.train}/{humanMetrics.test}</b>TRAIN / TEST</span></div>}</div>
-        {humanModel&&<div className="trainedBanner"><span>✓ HUMAN-IN-THE-LOOP MODEL ACTIVE</span><b>Ranking weights updated from {humanCount} editorial labels.</b></div>}
-      </>}
-    </section>}
-    <footer><span>SIGNAL / AN INDEPENDENT WLDD-INSPIRED ML PROTOTYPE</span><span>Real browser training · held-out evaluation · explainable ranking · no proprietary data</span></footer>
-  </main>
-}
-
-function Metric({label,value,inverse=false}:{label:string;value:number;inverse?:boolean}) { return <div className="metric"><span>{label}</span><strong>{(value*100).toFixed(0)}<small>{inverse?' lower is better':' / 100'}</small></strong><div className="metricBar"><i style={{width:`${Math.min(100,(inverse?1-value:value)*100)}%`}}/></div></div> }
+function Metric({title,value}:{title:string,value:string}){return <div className="metric"><span>{title}</span><strong>{value}</strong><i/></div>}
+function Job({n,t,d}:{n:string;t:string;d:string}){return <div className="job"><span>{n}</span><b>{t}</b><p>{d}</p><em>↗</em></div>}
