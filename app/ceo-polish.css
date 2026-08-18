@@ -1,0 +1,24 @@
+/* SIGNAL — CEO presentation polish
+   Visual-only layer: keeps the approved product structure and ML behavior intact. */
+:root{--sig-accent:#b8ff45;--sig-ink:#07110b;--sig-muted:#8e9a91;--sig-panel:rgba(13,21,16,.72)}
+html{scroll-behavior:smooth}
+body{background:#050806;letter-spacing:-.01em}
+body:before{content:"";position:fixed;inset:0;pointer-events:none;z-index:9998;opacity:.035;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.45'/%3E%3C/svg%3E")}
+.topbar{backdrop-filter:blur(18px) saturate(1.15);-webkit-backdrop-filter:blur(18px);background:rgba(5,8,6,.78)!important;border-bottom:1px solid rgba(184,255,69,.09)!important;box-shadow:0 8px 30px rgba(0,0,0,.18)}
+.brand{transition:transform .25s ease,filter .25s ease}.brand:hover{transform:translateY(-1px);filter:brightness(1.12)}
+.brand>span{box-shadow:0 0 0 1px rgba(184,255,69,.2),0 0 28px rgba(184,255,69,.11);transition:box-shadow .3s ease}.brand:hover>span{box-shadow:0 0 0 1px rgba(184,255,69,.35),0 0 38px rgba(184,255,69,.22)}
+nav button{position:relative;transition:color .2s ease,transform .2s ease}nav button:after{content:"";position:absolute;left:50%;bottom:-7px;width:0;height:2px;transform:translateX(-50%);background:var(--sig-accent);box-shadow:0 0 10px rgba(184,255,69,.55);transition:width .25s ease}nav button:hover{transform:translateY(-1px)}nav button:hover:after,nav button.active:after{width:70%}
+.hero{position:relative;overflow:hidden}.hero:before{content:"";position:absolute;inset:auto -10% -45% 45%;height:520px;background:radial-gradient(circle,rgba(184,255,69,.10),transparent 62%);pointer-events:none}.hero>div{position:relative;z-index:1}
+.hero h1{letter-spacing:-.055em;text-wrap:balance}.hero h1 em{text-shadow:0 0 38px rgba(184,255,69,.08)}
+.primary,.secondary{transition:transform .22s ease,box-shadow .22s ease,border-color .22s ease}.primary:hover,.secondary:hover{transform:translateY(-2px)}.primary:hover{box-shadow:0 12px 35px rgba(184,255,69,.14)}.secondary:hover{border-color:rgba(184,255,69,.42)!important}
+.mode-grid,.mode-tabs,.actions{isolation:isolate}
+.mode-grid>*{transition:transform .2s ease,border-color .2s ease,background .2s ease}.mode-grid>*:hover{transform:translateY(-3px)}
+textarea,input,select{transition:border-color .2s ease,box-shadow .2s ease,background .2s ease}textarea:focus,input:focus,select:focus{outline:none;border-color:rgba(184,255,69,.55)!important;box-shadow:0 0 0 3px rgba(184,255,69,.07),0 0 30px rgba(184,255,69,.04)}
+button:focus-visible,a:focus-visible,textarea:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--sig-accent);outline-offset:3px}
+/* Make score/result cards feel like a product readout rather than a dashboard grid. */
+.score-card,.result-card,.metric-card,.signal-card,.strategy-card,.data-card,.lab-card{transition:transform .25s ease,box-shadow .25s ease,border-color .25s ease}.score-card:hover,.result-card:hover,.metric-card:hover,.signal-card:hover,.strategy-card:hover,.data-card:hover,.lab-card:hover{transform:translateY(-3px);box-shadow:0 18px 50px rgba(0,0,0,.22),0 0 0 1px rgba(184,255,69,.06)}
+/* Editorial rhythm */
+section{scroll-margin-top:90px}.meta span{transition:color .2s ease}.meta span:hover{color:#dfffc2}
+@media(max-width:900px){.topbar{padding:12px 16px}.topbar nav{overflow-x:auto;max-width:62vw;scrollbar-width:none}.topbar nav::-webkit-scrollbar{display:none}.online{display:none}.hero{padding-left:20px!important;padding-right:20px!important}.hero h1{font-size:clamp(48px,12vw,82px)}.actions{flex-wrap:wrap}.actions button{min-height:48px}.meta{flex-wrap:wrap;gap:10px 18px}}
+@media(max-width:620px){.topbar{gap:10px}.brand b small{display:none}.topbar nav button{font-size:10px}.heroArt{display:none}.actions button{width:100%;justify-content:center}.meta{font-size:9px}.score-card,.result-card,.metric-card{min-width:0}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
