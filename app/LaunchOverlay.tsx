@@ -16,7 +16,9 @@ export default function LaunchOverlay() {
     <div className="launchOverlay" aria-label="SIGNAL — Content Opportunity Intelligence">
       <div className="launchGrid" aria-hidden="true" />
       <div className="launchGlow" aria-hidden="true" />
-      <div className="launchLogoMark" aria-hidden="true">S</div>
+      <div className="launchLogoMark" aria-hidden="true">
+        <img src="/signal-logo.svg" alt="" />
+      </div>
       <div className="launchWord" aria-label="SIGNAL">
         {'SIGNAL'.split('').map((letter, i) => (
           <span key={`${letter}-${i}`} style={{ animationDelay: `${i * 125}ms` }}>
